@@ -122,6 +122,19 @@ Every function accepts `lang=` to pick a Wikipedia/Wiktionary edition,
 reuses a shared `WikiClient` session, and raises `WikiError` subclasses
 (`WikiAPIError`, `WikiNotFoundError`) on failure.
 
+## Examples
+
+Runnable, end-to-end scripts that use the library against the live network
+live in [`examples/`](examples/), covering search engines, page reading and
+each Wikimedia API:
+
+```bash
+python examples/01_search.py
+python examples/08_research_pipeline.py
+```
+
+See [`examples/README.md`](examples/README.md) for the full list.
+
 ## Documentation
 
 The full API reference (every function, class and parameter, generated from the
