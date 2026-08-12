@@ -27,6 +27,12 @@ Wiktionary definitions.
 - **Wikimedia Commons** — image search, file URLs, thumbnails, licences.
 - **Wiktionary** — definitions, etymology, languages of a word.
 
+**Page reading**
+
+- **`netgo.fetch`** — download any web page and get back just its main
+  content, with the site template (nav, headers, footers, sidebars,
+  banners) filtered out.
+
 When a search page is throttled or blocked, netgo raises `SearchBlockedError`
 instead of silently returning nothing, so automation can detect and react.
 
@@ -62,6 +68,26 @@ out = netgo.search_many(["cats", "dogs"], max_workers=4, num=5)
 for query, results in out.items():
     print(query, [r.url for r in results])
 ```
+
+## Viewing a page
+
+Fetch any URL and read just its real content; the site template
+(navigation, headers, footers, sidebars, banners, comment widgets) is
+filtered out:
+
+```python
+import netgo
+
+page = netgo.fetch("https://www.bbc.co.uk/news/science-environment-56837908")
+print(page.title)      # "Climate change: Biggest..."
+print(page.site)       # "bbc.co.uk"
+print(page.paragraphs[:3])
+```
+
+`netgo.fetch` returns a `Page` with the extracted title, domain, cleaned
+plain-text body (`text` and `paragraphs`) and the content HTML. ``PageError``
+is raised for transport failures (`PageFetchError`) or pages with no
+readable content (`PageParseError`), so automation can detect and react.
 
 ## Wikipedia APIs
 

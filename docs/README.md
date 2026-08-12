@@ -4,6 +4,11 @@ Generated from docstrings with `scripts/generate_docs.py`.
 
 
 - [netgo](netgo.md)
+- [netgo.page](netgo.page.md)
+- [netgo.page.errors](netgo.page.errors.md)
+- [netgo.page.extract](netgo.page.extract.md)
+- [netgo.page.fetch](netgo.page.fetch.md)
+- [netgo.page.models](netgo.page.models.md)
 - [netgo.search](netgo.search.md)
 - [netgo.search.bing](netgo.search.bing.md)
 - [netgo.search.errors](netgo.search.errors.md)

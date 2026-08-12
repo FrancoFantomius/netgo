@@ -14,7 +14,9 @@ The ``engine`` option of ``netgo.search`` selects the backend.
 Besides search engines, netgo also wraps the MediaWiki Action API in
 ``netgo.wiki``: Wikipedia full-text search and article structure,
 Wikidata entities, Wikimedia Commons files and Wiktionary definitions,
-all behind a shared :class:`netgo.wiki.WikiClient` session.
+all behind a shared :class:`netgo.wiki.WikiClient` session. And
+``netgo.page`` fetches any web page and reduces it to its main content,
+skipping the site template around the article.
 
 Example:
     >>> import netgo
@@ -33,7 +35,8 @@ Example:
     ['cats', 'dogs']
 """
 
-from . import wiki
+from . import page, wiki
+from .page import Page, PageError, PageFetchError, PageParseError, fetch
 from .search import (
     Result,
     SearchBlockedError,
@@ -45,7 +48,7 @@ from .search import (
     search_many,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "Result",
@@ -56,6 +59,12 @@ __all__ = [
     "bing",
     "search",
     "search_many",
+    "Page",
+    "PageError",
+    "PageFetchError",
+    "PageParseError",
+    "fetch",
+    "page",
     "wiki",
     "__version__",
 ]

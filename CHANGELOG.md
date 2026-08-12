@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-12
+
+### Added
+- `netgo.page` subpackage that fetches any web page and reduces it to its
+  main content, skipping the site template (`netgo.page`).
+- `netgo.fetch` top-level entry point returning a `Page` with the extracted
+  title, domain, cleaned plain-text body (`text`, `paragraphs`) and content
+  HTML.
+- Readability-style extractor (`netgo.page.extract`): drops template chrome
+  (nav, headers, footers, sidebars, banners, comment widgets, cookie
+  consent), scores the remaining containers by prose and keeps the article.
+- `PageError`, `PageFetchError` and `PageParseError` exceptions
+  (`netgo.page.errors`).
+- `Page` dataclass model (`netgo.page.models`).
+- Offline fixture-based test suite (`tests/test_page.py`).
+- Generated API documentation for the new modules (`docs/netgo.page*.md`).
+- README "Viewing a page" section with examples.
+
 ## [0.2.0] - 2026-08-12
 
 ### Added
