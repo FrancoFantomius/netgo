@@ -8,6 +8,8 @@ Every backend returns list of `Result` objects, so switching or combining engine
 
 The package re-exports the main entry points and shared types at the top level for convenience: ``netgo.search``, ``netgo.search_many``, ``netgo.Result``, ``netgo.SearchParams`` and the search errors. The ``engine`` option of ``netgo.search`` selects the backend.
 
+Besides search engines, netgo also wraps the MediaWiki Action API in ``netgo.wiki``: Wikipedia full-text search and article structure, Wikidata entities, Wikimedia Commons files and Wiktionary definitions, all behind a shared `netgo.wiki.WikiClient` session.
+
 **Example:**
 ```python
 >>> import netgo

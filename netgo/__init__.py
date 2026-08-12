@@ -11,6 +11,11 @@ level for convenience: ``netgo.search``, ``netgo.search_many``,
 ``netgo.Result``, ``netgo.SearchParams`` and the search errors.
 The ``engine`` option of ``netgo.search`` selects the backend.
 
+Besides search engines, netgo also wraps the MediaWiki Action API in
+``netgo.wiki``: Wikipedia full-text search and article structure,
+Wikidata entities, Wikimedia Commons files and Wiktionary definitions,
+all behind a shared :class:`netgo.wiki.WikiClient` session.
+
 Example:
     >>> import netgo
     >>> links = netgo.search("italy travel", num=5)
@@ -28,6 +33,7 @@ Example:
     ['cats', 'dogs']
 """
 
+from . import wiki
 from .search import (
     Result,
     SearchBlockedError,
@@ -39,7 +45,7 @@ from .search import (
     search_many,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "Result",
@@ -50,5 +56,6 @@ __all__ = [
     "bing",
     "search",
     "search_many",
+    "wiki",
     "__version__",
 ]
