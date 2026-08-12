@@ -38,6 +38,13 @@ def main():
     for site, page in sorted(item.sitelinks.items()):
         print(f"  {site}: {page}")
 
+    print("\n== raw SPARQL: items with a guidance system (P624) ==")
+    for row in wiki.sparql(language="en")[:5]:
+        print(
+            f"  {row.get('item')}: {row.get('itemLabel')} -> "
+            f"{row.get('guidanceSystemLabel')} ({row.get('guidanceSystem')})"
+        )
+
 
 if __name__ == "__main__":
     main()

@@ -8,7 +8,7 @@ Talks to four Wikimedia wikis through a single shared
   categories, images, random pages and geo search.
 - **Wikidata** (:mod:`netgo.wiki.wikidata`) - resolve article titles to
   QIDs, fetch entities, search labels, read claims/properties, aliases
-  and sitelinks.
+  and sitelinks, and run raw SPARQL queries.
 - **Wikimedia Commons** (:mod:`netgo.wiki.wikimedia`) - find media files
   and fetch their URLs, thumbnails and licensing metadata.
 - **Wiktionary** (:mod:`netgo.wiki.wiktionary`) - dictionary
@@ -65,6 +65,7 @@ from .wikidata import (
     entity,
     labels,
     sitelinks,
+    sparql,
     wikidata_id,
 )
 from .wikidata import search as wikidata_search
@@ -115,6 +116,7 @@ __all__ = [
     "aliases",
     "sitelinks",
     "wikidata_search",
+    "sparql",
     # Wikimedia Commons
     "search_images",
     "file_info",

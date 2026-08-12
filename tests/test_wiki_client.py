@@ -95,3 +95,36 @@ def test_api_call_raises_on_non_json_body():
         assert exc.status == 200
     else:
         raise AssertionError("expected WikiAPIError")
+
+
+def test_sparql_call_hits_query_service():
+    payload = {"head": {"vars": ["item"]}, "results": {"bindings": []}}
+    session = FakeSession(payload)
+    client = WikiClient(session=session)
+    out = client.sparql_call("SELECT ?item WHERE { ?item wdt:P624 ?x . }")
+    assert out is payload
+    assert session.last_url == "https://query.wikidata.org/sparql"
+    assert session.last_params["format"] == "json"
+    assert "wdt:P624" in session.last_params["query"]
+
+
+def test_sparql_call_raises_on_http_error():
+    client = WikiClient(
+        session=FakeSession(http_error=__import__("requests").HTTPError("403"))
+    )
+    try:
+        client.sparql_call("SELECT * WHERE { ?s ?p ?o } LIMIT 1")
+    except WikiAPIError as exc:
+        assert "403" in str(exc)
+    else:
+        raise AssertionError("expected WikiAPIError")
+
+
+def test_sparql_call_raises_on_non_json_body():
+    client = WikiClient(session=FakeSession(non_json=True))
+    try:
+        client.sparql_call("SELECT * WHERE { ?s ?p ?o } LIMIT 1")
+    except WikiAPIError as exc:
+        assert exc.status == 200
+    else:
+        raise AssertionError("expected WikiAPIError")

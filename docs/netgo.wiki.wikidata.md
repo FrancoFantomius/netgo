@@ -7,6 +7,9 @@ Wikidata stores facts as \*entities\* (Q-items like ``Q2`` = Earth and P-propert
 the API returns; it does not change the entity itself.
 - ``wikidata_id`` bridges a Wikipedia title to its QID so you can
 jump from an article to its facts in one helper.
+- `sparql` runs raw SPARQL against ``query.wikidata.org`` for
+questions the Action API cannot answer (e.g. items carrying a
+given property).
 
 **Example:**
 ```python
@@ -211,4 +214,46 @@ Keys are site keys like ``"enwiki"``, ``"commons"`` or ``"itwikiquote"`` and val
 >>> links = sitelinks("Q2")
 >>> "enwiki" in links
 True
+```
+
+### `_binding_value(binding: dict) -> str`
+Map a SPARQL JSON binding to a plain string.
+
+Entity IRIs are trimmed to their QID (``http://www.wikidata.org/ entity/Q2`` -> ``"Q2"``); every other value (literals, external IRIs, blank nodes) keeps the raw ``value`` string.
+
+**Example:**
+```python
+>>> _binding_value({"value": "http://www.wikidata.org/entity/Q2", "type": "uri"})
+'Q2'
+>>> _binding_value({"value": "Earth", "type": "literal", "xml:lang": "en"})
+'Earth'
+```
+
+### `sparql(query: str | None = None, language: str = 'en', client: netgo.wiki.client.WikiClient | None = None, timeout: int = 30, delay: float = 0.0) -> list[dict[str, str]]`
+Run a raw SPARQL query against the Wikidata Query Service.
+
+Executes ``query`` on ``query.wikidata.org`` and returns each row as a ``{variable: value}`` dict, with Wikidata entity IRIs trimmed to their QID. The default query demonstrates property ``P624`` (guidance system of a missile): it returns every item carrying a P624 statement together with its value and their English labels.
+
+**Args:**
+- `query`: The raw SPARQL query to run. When omitted, a query that selects items with a ``P624`` guidance-system statement is used.
+- `language`: Language code interpolated into the default query's ``wikibase:label`` service; ignored when ``query`` is given.
+- `client`: Optional `netgo.wiki.WikiClient` to reuse.
+- `timeout`: Request timeout in seconds.
+- `delay`: Seconds to sleep before the request (rate limiting).
+
+**Returns:**
+- A list of rows; each row maps a selected variable name to a plain string value (QIDs for Wikidata entities).  
+
+**Raises:**
+- `netgo.wiki.WikiAPIError`: On transport failures, HTTP errors or non-JSON replies (e.g. a malformed query).
+
+**Example:**
+```python
+>>> from netgo.wiki import sparql
+>>> rows = sparql()
+>>> rows[0]["item"].startswith("Q")
+True
+>>> rows = sparql(
+...     "SELECT ?page WHERE { wd:Q191157 wdt:P2860 ?page . } LIMIT 5"
+... )
 ```

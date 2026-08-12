@@ -23,7 +23,7 @@ Wiktionary definitions.
 - **Wikipedia** — full-text search, summaries, paragraphs, sections,
   links, backlinks, categories, images, random pages, geo search.
 - **Wikidata** — titles → QIDs, entities, label search, claims,
-  aliases, sitelinks.
+  aliases, sitelinks, raw SPARQL.
 - **Wikimedia Commons** — image search, file URLs, thumbnails, licences.
 - **Wiktionary** — definitions, etymology, languages of a word.
 
@@ -108,6 +108,10 @@ near = wiki.geo_search(41.89, 12.49, radius=2000, limit=5)
 qid = wiki.wikidata_id("Bread")
 item = wiki.entity(qid, language="en")
 print(item.labels["en"], item.claims.get("P279", []))
+
+# Wikidata: raw SPARQL (default query returns items with a P624 guidance system)
+rows = wiki.sparql(language="en")
+print(rows[0]["itemLabel"], rows[0]["guidanceSystemLabel"])
 
 # Wikimedia Commons: find files and their metadata
 files = wiki.search_images("sunflower", limit=3)

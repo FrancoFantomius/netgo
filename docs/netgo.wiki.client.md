@@ -1,6 +1,6 @@
 # Shared HTTP client for the MediaWiki Action API.
 
-`WikiClient` wraps a `requests.Session` and points it at one of the four Wikimedia wikis that netgo talks to (Wikipedia, Wikidata, Wikimedia Commons, Wiktionary). Every higher-level function in `netgo.wiki` builds (or reuses) a client and drives it through `WikiClient.api_call`, which handles the common plumbing: the ``format=json`` flag, error handling and missing-page detection.
+`WikiClient` wraps a `requests.Session` and points it at one of the four Wikimedia wikis that netgo talks to (Wikipedia, Wikidata, Wikimedia Commons, Wiktionary). Every higher-level function in `netgo.wiki` builds (or reuses) a client and drives it through `WikiClient.api_call`, which handles the common plumbing: the ``format=json`` flag, error handling and missing-page detection. For the Wikidata Query Service, `WikiClient.sparql_call` runs raw SPARQL queries through the same session and rate-limiting settings.
 
 The constructor is public so advanced users can reuse a single session (or inject their own ``requests.Session`` with proxies/timeouts) across many calls:
 

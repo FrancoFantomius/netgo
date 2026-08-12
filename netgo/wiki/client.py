@@ -5,7 +5,9 @@ one of the four Wikimedia wikis that netgo talks to (Wikipedia,
 Wikidata, Wikimedia Commons, Wiktionary). Every higher-level function in
 :mod:`netgo.wiki` builds (or reuses) a client and drives it through
 :meth:`WikiClient.api_call`, which handles the common plumbing: the
-``format=json`` flag, error handling and missing-page detection.
+``format=json`` flag, error handling and missing-page detection. For
+the Wikidata Query Service, :meth:`WikiClient.sparql_call` runs raw
+SPARQL queries through the same session and rate-limiting settings.
 
 The constructor is public so advanced users can reuse a single session
 (or inject their own ``requests.Session`` with proxies/timeouts) across
@@ -41,6 +43,8 @@ _HOSTS = {
     "wikimedia": "https://commons.wikimedia.org/w/api.php",
     "wiktionary": "https://{lang}.wiktionary.org/w/api.php",
 }
+
+_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 
 def _default_headers() -> dict[str, str]:
@@ -150,6 +154,64 @@ class WikiClient:
         if not ignore_missing and _all_missing(payload):
             raise WikiNotFoundError(_subject(payload), lang=self.lang)
         return payload
+
+    def sparql_call(self, query: str) -> dict:
+        """Run a raw SPARQL query against the Wikidata Query Service.
+
+        Unlike :meth:`api_call` this talks to ``query.wikidata.org``, so
+        it is meant for Wikidata-oriented clients. It sends the query
+        with ``format=json`` through the same session, timeout and rate
+        limiting settings and raises :class:`WikiAPIError` on HTTP
+        failures or replies that do not parse as JSON.
+
+        Args:
+            query: The raw SPARQL query to execute.
+
+        Returns:
+            The parsed SPARQL JSON payload (``head``/``results``).
+
+        Raises:
+            WikiAPIError: On transport failures, HTTP errors or non-JSON
+                replies (e.g. a malformed query).
+
+        Example:
+            >>> from netgo.wiki import WikiClient
+            >>> client = WikiClient(host="wikidata")
+            >>> payload = client.sparql_call(
+            ...     "SELECT ?item WHERE { ?item wdt:P624 ?x . } LIMIT 3"
+            ... )
+            >>> "results" in payload
+            True
+        """
+        if self.delay:
+            time.sleep(self.delay)
+
+        resp: requests.Response | None = None
+        try:
+            resp = self._session().get(
+                _SPARQL_ENDPOINT,
+                params={"query": query, "format": "json"},
+                headers={
+                    **self.headers,
+                    "Accept": "application/sparql-results+json",
+                },
+                timeout=self.timeout,
+            )
+            resp.raise_for_status()
+            try:
+                return resp.json()
+            except ValueError as exc:
+                detail = (getattr(resp, "text", "") or "").strip()
+                raise WikiAPIError(
+                    "Wikidata Query Service returned non-JSON content",
+                    info=detail[:200] or None,
+                    status=resp.status_code,
+                ) from exc
+        except requests.RequestException as exc:
+            status = None
+            if isinstance(exc, requests.HTTPError):
+                status = getattr(exc, "response", None) and exc.response.status_code
+            raise WikiAPIError(str(exc), status=status) from exc
 
 
 def _all_missing(payload: dict) -> bool:

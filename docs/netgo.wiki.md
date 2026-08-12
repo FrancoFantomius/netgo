@@ -8,7 +8,7 @@ summaries and paragraphs, section outlines, links, backlinks, categories, images
 
 - \*\*Wikidata\*\* (`netgo.wiki.wikidata`) - resolve article titles to
 
-QIDs, fetch entities, search labels, read claims/properties, aliases and sitelinks.
+QIDs, fetch entities, search labels, read claims/properties, aliases and sitelinks, and run raw SPARQL queries.
 
 - \*\*Wikimedia Commons\*\* (`netgo.wiki.wikimedia`) - find media files
 

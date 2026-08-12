@@ -6,6 +6,8 @@ from netgo.wiki.wikidata import (
     labels,
     search,
     sitelinks,
+    sparql,
+    _binding_value,
     _claim_value,
     _parse_claims,
     wikidata_id,
@@ -147,3 +149,40 @@ def test_labels_aliases_sitelinks():
 
     link_payload = {"entities": {"Q2": {"sitelinks": {"enwiki": {"title": "Earth"}}}}}
     assert sitelinks("Q2", client=_client(link_payload))["enwiki"] == "Earth"
+
+
+def test_binding_value_mapping():
+    assert _binding_value(
+        {"value": "http://www.wikidata.org/entity/Q2", "type": "uri"}
+    ) == "Q2"
+    assert _binding_value(
+        {"value": "http://example.org/x", "type": "uri"}
+    ) == "http://example.org/x"
+    assert _binding_value({"value": "Earth", "type": "literal", "xml:lang": "en"}) == "Earth"
+
+
+def test_sparql_uses_p624_default_query():
+    payload = {"head": {"vars": ["item"]}, "results": {"bindings": []}}
+    session = FakeSession(payload)
+    rows = sparql(client=WikiClient(host="wikidata", session=session))
+    assert rows == []
+    assert "wdt:P624" in session.last_params["query"]
+
+
+def test_sparql_parses_bindings_to_qids():
+    payload = {
+        "head": {"vars": ["item", "itemLabel"]},
+        "results": {
+            "bindings": [
+                {
+                    "item": {"type": "uri", "value": "http://www.wikidata.org/entity/Q186135"},
+                    "itemLabel": {"type": "literal", "value": "AIM-9 Sidewinder"},
+                }
+            ]
+        },
+    }
+    rows = sparql(
+        "SELECT ?item ?itemLabel WHERE { ?item wdt:P624 ?g . }",
+        client=_client(payload),
+    )
+    assert rows == [{"item": "Q186135", "itemLabel": "AIM-9 Sidewinder"}]
