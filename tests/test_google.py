@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 
-from netgo.search.google import _parse_results
+from netgo.search.google import _decode_google_url, _parse_results
 
 SERP_HTML = """
 <html><body>
@@ -44,3 +44,34 @@ def test_parse_results_skips_non_http_links_and_google_links():
     """
     soup = BeautifulSoup(html, "html.parser")
     assert _parse_results(soup) == []
+
+
+def test_decode_google_url_forms():
+    assert _decode_google_url("/url?q=https%3A%2F%2Fexample.org%2Fa&amp;sa=U") == (
+        "https://example.org/a"
+    )
+    assert _decode_google_url(
+        "https://www.google.com/url?esrc=s&q=https%3A%2F%2Fexample.org&sa=D"
+    ) == "https://example.org"
+    assert _decode_google_url(
+        "https://translate.google.com/translate?u=https%3A%2F%2Fexample.org%2Fb"
+    ) == "https://example.org/b"
+    assert _decode_google_url("https://example.org/page") == "https://example.org/page"
+
+
+def test_parse_results_handles_absolute_redirects():
+    html = """
+    <div class="g"><div class="tF2Cxc">
+      <a href="https://www.google.com/url?esrc=s&q=https%3A%2F%2Fwww.example.org&sa=D">
+        <h3>Example</h3>
+      </a>
+    </div></div>
+    <div class="g"><div class="tF2Cxc">
+      <a href="https://translate.google.com/translate?u=https%3A%2F%2Fen.wikipedia.org">
+        <h3>Wiki</h3>
+      </a>
+    </div></div>
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    results = _parse_results(soup)
+    assert [r.url for r in results] == ["https://www.example.org", "https://en.wikipedia.org"]

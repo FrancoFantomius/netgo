@@ -1,21 +1,37 @@
 # netgo
 
-A Python toolkit for scraping search engines and getting the links back.
-Google search is one of its backends (currently the first one).
+A lightweight Python toolkit for scraping search engines and getting the links back.
+
+netgo exposes a single, engine-agnostic API on top of several search backends,
+so you can switch or combine engines without touching your data model. Every
+backend returns the same `netgo.Result` objects, ranked by the engine.
+
+**Backends**
+
+- **Google** — the default.
+- **Bing** — selected with `engine="bing"`.
+
+When a search page is throttled or blocked, netgo raises `SearchBlockedError`
+instead of silently returning nothing, so automation can detect and react.
 
 ## Install
 
 ```bash
-pip install -e .
+pip install git+https://github.com/FrancoFantomius/netgo.git
 ```
 
-## Usage
+Requires Python 3.9+.
+
+## Getting started
 
 ```python
 import netgo
 
-# Google search, one of netgo's backends
+# Google (default), num results per page
 results = netgo.search("python web scraping", num=10)
+
+# Bing, same interface
+results = netgo.search("python web scraping", num=10, engine="bing")
 
 for r in results:
     print(r.position, r.title)
@@ -23,43 +39,26 @@ for r in results:
     print("  ", r.snippet[:80])
 ```
 
-Every result is a `netgo.search.Result` dataclass:
-
-| Field      | Meaning                     |
-|------------|-----------------------------|
-| `url`      | The real destination URL    |
-| `title`    | Page title                  |
-| `snippet`  | Short text under the title  |
-| `position` | Ranking on the page (1-based)|
-
-## Google options
+Run several queries in parallel:
 
 ```python
-netgo.search(
-    "italy travel",   # query
-    num=20,           # how many results to request (max 100)
-    lang="it",        # language / host language, e.g. hl=it
-    start=10,         # pagination offset
-    safe=True,        # enable safe search
-    gbv=True,         # use Google's basic HTML interface
-    delay=1.0,        # sleep seconds before the request
-)
+out = netgo.search_many(["cats", "dogs"], max_workers=4, num=5)
+for query, results in out.items():
+    print(query, [r.url for r in results])
 ```
 
-### Multiple queries
+## Documentation
 
-```python
-links = netgo.search_many(["cats", "dogs"], max_workers=4, num=5)
-for query, results in links.items():
-    print(query, [r.url for r in results])
+The full API reference (every function, class and parameter, generated from the
+docstrings) lives in [`docs/`](docs/). Regenerate it with:
+
+```bash
+python scripts/generate_docs.py
 ```
 
 ## Notes
 
-- This scrapes the public Google results page. Google may throttle or block
-  requests from datacenter IPs; add `delay` between calls, or pass `gbv=True`
-  to try the basic HTML interface.
-- When blocked, `search` raises `SearchBlockedError` instead of silently
-  returning nothing.
-- Attribution / webmaster guidelines: use responsibly and check each engine's
-  ToS for your use case.
+- This scrapes public search-engine result pages. Engines may throttle or
+  block requests from datacenter IPs; add `delay` between calls, or use the
+  alternate engine when one is blocked.
+- Check each engine's terms of service for your use case.

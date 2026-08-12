@@ -5,7 +5,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Iterable
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -25,8 +25,6 @@ _HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-_REDIRECT_RE = re.compile(r"^/url\?q=|&?url=([^&]+)&")
-
 _BLOCK_MARKERS = (
     "if you are not redirected",
     "se non vieni reindirizzato",
@@ -35,6 +33,17 @@ _BLOCK_MARKERS = (
 
 
 def _build_url(params: SearchParams) -> str:
+    """Build a Google search URL from the given :class:`SearchParams`.
+
+    The query is URL-encoded, then ``num``, ``hl`` and ``start`` are
+    appended. ``safe`` and ``gbv`` add their respective URL flags, so
+    the returned URL is ready to be fetched with :func:`requests.get`.
+
+    Example:
+        >>> from netgo.search import SearchParams
+        >>> _build_url(SearchParams(query="hello world", safe=True, gbv=True))
+        'https://www.google.com/search?q=hello%20world&num=10&hl=en&start=0&safe=active&gbv=1'
+    """
     query = requests.utils.quote(params.query)
     url = (
         f"https://www.google.com/search?q={query}"
@@ -50,23 +59,79 @@ def _build_url(params: SearchParams) -> str:
 
 
 def _decode_google_url(text: str) -> str:
-    """Extract the real URL from a Google /url?q=... redirect."""
-    if not text.startswith("/url"):
+    """Resolve a Google redirect link to the real destination URL.
+
+    Result anchors come in three shapes, all of which are handled:
+
+    - relative: ``/url?q=<encoded-URL>&sa=...``
+    - absolute: ``https://www.google.com/url?esrc=s&q=<encoded-URL>&usg=...``
+    - translated: ``https://translate.google.com/translate?u=<encoded-URL>``
+
+    The target is decoded from the ``q`` (or ``u``) parameter. Inputs
+    that are not redirect links are returned unchanged.
+
+    Example:
+        >>> _decode_google_url(
+        ...     "/url?q=https%3A%2F%2Fexample.org%2Fa%3Fb%3D1&amp;sa=U&amp;ved=2ahUKE"
+        ... )
+        'https://example.org/a?b=1'
+        >>> _decode_google_url(
+        ...     "https://www.google.com/url?esrc=s&q=https%3A%2F%2Fexample.org&sa=D"
+        ... )
+        'https://example.org'
+        >>> _decode_google_url("https://example.org/page")
+        'https://example.org/page'
+    """
+    parsed = urlparse(text)
+    is_redirect = (
+        text.startswith("/url")
+        or (
+            "google.com" in parsed.netloc
+            and parsed.path.rstrip("/").endswith("/url")
+        )
+        or (
+            parsed.netloc == "translate.google.com"
+            and parsed.path.rstrip("/").endswith("/translate")
+        )
+    )
+    if not is_redirect:
         return text
 
-    match = _REDIRECT_RE.search(text)
-    if match:
-        rest = text[match.end():]
-        rest = rest.split("&")[0]
-        return unquote(rest)
+    query = parsed.query
+    qs = parse_qs(query)
+    target_param = "u" if parsed.netloc == "translate.google.com" else "q"
+    target = qs.get(target_param)
+    if target:
+        return target[0]
 
     return html.unescape(text)
 
 
 def _parse_results(soup: BeautifulSoup) -> list[Result]:
+    """Parse a Google SERP HTML tree into a list of :class:`Result`.
+
+    Walks every result anchor in document order — both the relative
+    ``/url?q=...`` links and the absolute ``https://www.google.com/url?...``
+    and ``https://translate.google.com/translate?...`` forms — decodes
+    the destination URL and picks the title and snippet from the
+    surrounding result card. Non-http targets (javascript:, intl/ pages)
+    and google.com internal links are discarded, so the returned list is
+    strictly the organic results.
+
+    Example:
+        >>> from bs4 import BeautifulSoup
+        >>> html = '<a href="/url?q=https%3A%2F%2Fexample.org"><h3>Example</h3></a>'
+        >>> _parse_results(BeautifulSoup(html, "html.parser"))[0]
+        Result(url='https://example.org', title='Example', snippet='', position=1, meta={})
+    """
     position = 0
     results: list[Result] = []
-    for a in soup.select("a[href^='/url?q=']"):
+    selector = (
+        "a[href^='/url?q='], "
+        "a[href^='https://www.google.com/url?'], "
+        "a[href^='https://translate.google.com/translate?']"
+    )
+    for a in soup.select(selector):
         url = _decode_google_url(a.get("href", ""))
         if not url.startswith("http") or "google.com" in urlparse(url).netloc:
             continue
@@ -105,6 +170,30 @@ def search(
     session: requests.Session | None = None,
 ) -> list[Result]:
     """Search Google and return a list of :class:`Result` links.
+
+    Builds the search URL from the parameters, fetches the results page
+    with :mod:`requests`, and parses the organic result links. Google
+    redirect URLs are resolved to their real destination, and each
+    result carries its title and snippet when available.
+
+    Notes:
+        - ``num`` is capped by Google at 100, whatever value is passed.
+        - Datacenter IPs are frequently rate-limited; when Google serves
+          an interstitial page instead of results, ``SearchBlockedError``
+          is raised so callers can tell a real empty result from a block.
+        - Passing ``gbv=True`` switches to Google's basic HTML interface,
+          which sometimes bypasses the block but in some regions gets
+          redirected to the consent page instead.
+        - Use ``delay`` to throttle consecutive requests.
+
+    Example:
+        >>> from netgo import search
+        >>> results = search("python packaging", num=10)
+        >>> results[0].position
+        1
+        >>> for r in results[:3]:
+        ...     print(r.title)
+        ...
 
     Args:
         query: The text to search for.
@@ -165,7 +254,23 @@ def search_many(
 ) -> dict[str, list[Result]]:
     """Run :func:`search` for several queries in parallel.
 
-    ``kwargs`` are forwarded to :func:`search` for every query.
+    Each query is submitted to a thread pool and all searches are
+    executed concurrently, which is much faster than a loop for dozens
+    of queries. ``kwargs`` (e.g. ``num``, ``delay``) are forwarded to
+    :func:`search` for every query.
+
+    A query that fails does not abort the others: it maps to an empty
+    list and its exception is stored under ``"<query>_error"``, so the
+    caller can inspect failures without losing the successful results.
+
+    Example:
+        >>> from netgo import search_many
+        >>> out = search_many(["cats", "dogs"], num=3, delay=0.5)
+        >>> out.keys()
+        dict_keys(['cats', 'dogs'])
+        >>> for query, results in out.items():
+        ...     print(query, [r.url for r in results])
+        ...
 
     Returns:
         A mapping of ``query -> list[Result]``.
