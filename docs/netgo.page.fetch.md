@@ -27,7 +27,7 @@ Downloads the page, filters out the site template (navigation, headers, footers,
 - `headers`: Extra HTTP headers merged over the browser defaults.
 
 **Returns:**
-- A `Page` with the extracted title, site, plain-text body, paragraph list and the cleaned content HTML.  
+- A `Page` with the extracted title, site, plain-text body, paragraph list, the cleaned content HTML and the raw HTML as returned by the server.  
 
 **Raises:**
 - `PageFetchError`: When the request fails or returns a non-2xx response.

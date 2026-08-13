@@ -72,6 +72,11 @@ def test_fetch_returns_page_with_filtered_content():
     assert isinstance(page, Page)
 
 
+def test_fetch_exposes_raw_html():
+    page = fetch("https://example.org/recipes/apple-pie", session=_FakeSession(ARTICLE_HTML))
+    assert page.raw == ARTICLE_HTML
+
+
 def test_fetch_uses_redirected_url():
     session = _FakeSession(ARTICLE_HTML, url="https://example.org/actual-page")
     page = fetch("https://example.org/recipes/apple-pie", session=session)

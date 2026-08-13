@@ -24,8 +24,9 @@ class Page:
 
     ``title`` is the page title and ``site`` the bare domain name;
     ``text`` and ``paragraphs`` hold the extracted main content (one
-    block per heading/paragraph), and ``html`` keeps the cleaned content
-    subtree so callers can render it or feed it to other parsers.
+    block per heading/paragraph), ``html`` keeps the cleaned content
+    subtree so callers can render it or feed it to other parsers, and
+    ``raw`` keeps the untouched HTML exactly as the server sent it.
 
     Example:
         >>> from netgo import page
@@ -42,6 +43,7 @@ class Page:
     text: str = ""
     paragraphs: list[str] = field(default_factory=list)
     html: str = ""
+    raw: str = ""
 
     def __str__(self) -> str:
         """Return the page URL for string formatting."""

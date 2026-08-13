@@ -33,7 +33,7 @@ import requests
 from .errors import WikiAPIError, WikiNotFoundError
 
 _USER_AGENT = (
-    "netgo/0.3.0 (https://github.com/FrancoFantomius/netgo; "
+    "netgo/0.4.0 (https://github.com/FrancoFantomius/netgo; "
     "mediawiki action api wrapper) requests/2.28"
 )
 

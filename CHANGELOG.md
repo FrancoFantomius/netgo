@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-13
+
+### Added
+- `netgo.sitemap` subpackage for XML sitemaps (`netgo.sitemap`).
+- `parse` that reads URL sets, sitemap indexes and plain-text sitemaps,
+  namespace-agnostic, resolving relative locations against a base URL
+  (`netgo.sitemap.parse`).
+- `load` that fetches a sitemap URL (plain or gzip-compressed) and parses
+  it, `discover` that finds the `Sitemap:` URLs a site declares in its
+  `robots.txt`, and `crawl` that follows a sitemap index recursively to
+  collect every page URL (`netgo.sitemap.fetch`).
+- `filter_by_prefix` that crawls a whole sitemap tree and keeps only the
+  page URLs that start with a given prefix, plus `Sitemap.by_prefix` to
+  filter a single parsed sitemap (`netgo.sitemap.fetch`,
+  `netgo.sitemap.models`).
+- `SitemapError`, `SitemapFetchError` and `SitemapParseError` exceptions
+  (`netgo.sitemap.errors`).
+- `Sitemap` and `SitemapEntry` dataclass models (`netgo.sitemap.models`).
+- `Page.raw` carrying the untouched HTML exactly as the server sent it
+  (`netgo.page.models`).
+- Offline fixture-based test suite (`tests/test_sitemap.py`).
+- Generated API documentation for the new modules (`docs/netgo.sitemap*.md`).
+- README "Sitemaps" section and a runnable example
+  (`examples/09_sitemap.py`).
+
 ## [0.3.0] - 2026-08-12
 
 ### Added

@@ -16,7 +16,9 @@ Besides search engines, netgo also wraps the MediaWiki Action API in
 Wikidata entities, Wikimedia Commons files and Wiktionary definitions,
 all behind a shared :class:`netgo.wiki.WikiClient` session. And
 ``netgo.page`` fetches any web page and reduces it to its main content,
-skipping the site template around the article.
+skipping the site template around the article. ``netgo.sitemap`` fetches
+and parses XML sitemaps, discovers them through ``robots.txt`` and
+crawls whole sitemap trees.
 
 Example:
     >>> import netgo
@@ -35,7 +37,7 @@ Example:
     ['cats', 'dogs']
 """
 
-from . import page, wiki
+from . import page, sitemap, wiki
 from .page import Page, PageError, PageFetchError, PageParseError, fetch
 from .search import (
     Result,
@@ -47,8 +49,20 @@ from .search import (
     search,
     search_many,
 )
+from .sitemap import (
+    Sitemap,
+    SitemapEntry,
+    SitemapError,
+    SitemapFetchError,
+    SitemapParseError,
+    crawl,
+    discover,
+    filter_by_prefix,
+    load,
+    parse,
+)
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "Result",
@@ -64,6 +78,18 @@ __all__ = [
     "PageFetchError",
     "PageParseError",
     "fetch",
+    # sitemap
+    "Sitemap",
+    "SitemapEntry",
+    "SitemapError",
+    "SitemapFetchError",
+    "SitemapParseError",
+    "parse",
+    "load",
+    "discover",
+    "crawl",
+    "filter_by_prefix",
+    "sitemap",
     "page",
     "wiki",
     "__version__",

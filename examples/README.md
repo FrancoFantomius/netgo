@@ -20,6 +20,7 @@ python examples/04_wikipedia.py
 | `06_commons.py`             | Finding media files and reading their metadata.          |
 | `07_wiktionary.py`          | Look up definitions, etymology and languages.            |
 | `08_research_pipeline.py`   | The full journey: search -> fetch -> summarize.          |
+| `09_sitemap.py`             | Discover sitemaps via robots.txt and read page URLs.     |
 
 Notes:
 

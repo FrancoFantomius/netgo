@@ -85,9 +85,45 @@ print(page.paragraphs[:3])
 ```
 
 `netgo.fetch` returns a `Page` with the extracted title, domain, cleaned
-plain-text body (`text` and `paragraphs`) and the content HTML. ``PageError``
+plain-text body (`text` and `paragraphs`), the content HTML and the raw
+HTML as the server sent it (`raw`). ``PageError``
 is raised for transport failures (`PageFetchError`) or pages with no
 readable content (`PageParseError`), so automation can detect and react.
+
+## Sitemaps
+
+Discover, parse and crawl XML sitemaps (URL sets, sitemap indexes and
+plain-text sitemaps):
+
+```python
+import netgo
+
+# Sitemaps a site declares in its robots.txt
+urls = netgo.sitemap.discover("https://www.example.com")
+
+# View a single sitemap, and every URL it announces
+sm = netgo.sitemap.load("https://www.example.com/sitemap.xml")
+print(sm.kind)              # "urlset" | "sitemapindex" | "text"
+for entry in sm:            # SitemapEntry with loc/lastmod/...
+    print(entry.loc)
+
+# Follow a sitemap index down to every page URL across all children
+pages = netgo.sitemap.crawl("https://www.example.com/sitemap_index.xml")
+
+# Every page whose URL starts with a given prefix (page_1, page_2, ...)
+paged = netgo.sitemap.filter_by_prefix(
+    "https://www.example.com/sitemap_index.xml",
+    "https://www.example.com/page_",
+)
+
+# Or filter a sitemap you already loaded
+subset = sm.by_prefix("https://www.example.com/page_")
+```
+
+`parse` handles raw content without the network (namespace-agnostic, resolves
+relative locations), `load` also unpacks gzip-compressed sitemaps, and
+`SitemapError` subclasses (`SitemapFetchError`, `SitemapParseError`) make
+failures detectable.
 
 ## Wikipedia APIs
 

@@ -66,7 +66,8 @@ def fetch(
 
     Returns:
         A :class:`Page` with the extracted title, site, plain-text body,
-        paragraph list and the cleaned content HTML.
+        paragraph list, the cleaned content HTML and the raw HTML as
+        returned by the server.
 
     Raises:
         PageFetchError: When the request fails or returns a non-2xx
@@ -102,4 +103,5 @@ def fetch(
         text=text,
         paragraphs=paragraphs,
         html=str(content) if content is not None else "",
+        raw=resp.text,
     )

@@ -1,0 +1,49 @@
+"""netgo.sitemap - fetch, discover and parse XML sitemaps.
+
+Talks to the sitemap protocol (sitemaps.org) through a few plain entry
+points:
+
+- :func:`parse` - parse sitemap content (XML URL sets, sitemap indexes
+  or plain-text URL lists) into a :class:`Sitemap`, resolving relative
+  locations against a base URL.
+- :func:`load` - fetch a sitemap URL (plain or gzip-compressed) and
+  parse it.
+- :func:`discover` - find the ``Sitemap:`` URLs a site declares in its
+  ``robots.txt``.
+- :func:`crawl` - recursively follow a sitemap index and collect every
+  URL entry across the whole tree.
+- :func:`filter_by_prefix` - crawl a sitemap tree and keep only the URLs
+  that start with a given prefix (e.g. ``page_1``, ``page_2``, ...).
+
+Every function returns structured dataclasses (see
+:mod:`netgo.sitemap.models`) and raises ``SitemapError`` subclasses on
+failure, so a ``try/except SitemapError`` covers the whole subpackage.
+
+Example:
+    >>> from netgo import sitemap
+    >>> sm = sitemap.load("https://www.example.com/sitemap.xml")
+    >>> first = sm.entries[0]
+    >>> first.loc.startswith("http")
+    True
+    >>> for child in sm.children:
+    ...     print(child.startswith("http"))
+    True
+"""
+
+from .errors import SitemapError, SitemapFetchError, SitemapParseError
+from .fetch import crawl, discover, filter_by_prefix, load
+from .models import Sitemap, SitemapEntry
+from .parse import parse
+
+__all__ = [
+    "Sitemap",
+    "SitemapEntry",
+    "SitemapError",
+    "SitemapFetchError",
+    "SitemapParseError",
+    "parse",
+    "load",
+    "discover",
+    "crawl",
+    "filter_by_prefix",
+]

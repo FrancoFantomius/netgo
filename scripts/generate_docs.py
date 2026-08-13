@@ -15,14 +15,20 @@ import importlib
 import inspect
 import pkgutil
 import re
+import sys
 from dataclasses import MISSING, fields, is_dataclass
 from pathlib import Path
 from typing import Any
 
-import netgo
-
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "docs"
+
+# Prefer the source tree over any installed copy of netgo, so the docs are
+# always generated from this checkout, no matter where the script is run from.
+if ROOT not in map(Path, sys.path):
+    sys.path.insert(0, str(ROOT))
+
+import netgo
 
 
 def iter_modules(package: Any):
