@@ -286,6 +286,7 @@ def main() -> None:
         index.append(f"- [{module_name}]({out_file.name})")
         written += 1
 
+    (OUTPUT_DIR / "index.md").write_text("\n".join(index), encoding="utf-8")
     (OUTPUT_DIR / "README.md").write_text("\n".join(index), encoding="utf-8")
     print(f"Wrote {written} module files to {OUTPUT_DIR}")
 

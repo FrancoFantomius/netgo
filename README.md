@@ -177,11 +177,19 @@ See [`examples/README.md`](examples/README.md) for the full list.
 
 ## Documentation
 
-The full API reference (every function, class and parameter, generated from the
-docstrings) lives in [`docs/`](docs/). Regenerate it with:
+The documentation is hosted at **[francofantomius.com/netgo/](https://francofantomius.com/netgo/)**.
+
+The documentation is built with [VitePress](https://vitepress.dev/) and generated directly from Python docstrings. To regenerate the documentation files locally:
 
 ```bash
 python scripts/generate_docs.py
+```
+
+To run the VitePress documentation server locally:
+
+```bash
+npm install
+npm run docs:dev
 ```
 
 ## Notes

@@ -9,6 +9,35 @@ description = "Search engine toolkit and Wikipedia/Wikidata/Commons/Wiktionary w
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
+authors = [
+    { name = "FrancoFantomius" },
+]
+keywords = [
+    "search",
+    "search-engine",
+    "google-search",
+    "bing-search",
+    "wikipedia",
+    "wikidata",
+    "wiktionary",
+    "wikimedia-commons",
+    "sitemap",
+    "web-scraping",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "requests>=2.28",
     "beautifulsoup4>=4.11",
@@ -16,6 +45,13 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
+
+[project.urls]
+Homepage = "https://github.com/FrancoFantomius/netgo"
+Documentation = "https://francofantomius.com/netgo/"
+Repository = "https://github.com/FrancoFantomius/netgo.git"
+Issues = "https://github.com/FrancoFantomius/netgo/issues"
+Changelog = "https://github.com/FrancoFantomius/netgo/blob/master/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["netgo*"]

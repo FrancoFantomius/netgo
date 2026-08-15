@@ -43,3 +43,8 @@ Thumbs.db
 .mypy_cache/
 .pytype/
 .dmypy.json
+
+# Node / VitePress
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
