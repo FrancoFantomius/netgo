@@ -133,7 +133,9 @@ def _parse_results(soup: BeautifulSoup) -> list[Result]:
     )
     for a in soup.select(selector):
         url = _decode_google_url(a.get("href", ""))
-        if not url.startswith("http") or "google.com" in urlparse(url).netloc:
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme not in {"http", "https"} or host == "google.com" or host.endswith(".google.com"):
             continue
         position += 1
 
