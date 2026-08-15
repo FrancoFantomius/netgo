@@ -81,15 +81,10 @@ def remove_path(path: Path) -> Tuple[bool, str]:
         if not path.exists() and not path.is_symlink():
             return True, "already removed"
         if path.is_dir() and not path.is_symlink():
-            shutil.rmtree(
-                path,
-                onexc=lambda func, p, exc: handle_remove_readonly(func, p, exc)
-                if sys.version_info >= (3, 12)
-                else None,
-                onerror=handle_remove_readonly
-                if sys.version_info < (3, 12)
-                else None,
-            )
+            if sys.version_info >= (3, 12):
+                shutil.rmtree(path, onexc=handle_remove_readonly)
+            else:
+                shutil.rmtree(path, onerror=handle_remove_readonly)
         else:
             try:
                 path.unlink()
