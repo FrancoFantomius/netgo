@@ -62,7 +62,7 @@ from .sitemap import (
     parse,
 )
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = [
     "Result",

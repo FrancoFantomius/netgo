@@ -4,14 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netgo"
-version = "0.4.0"
+version = "0.4.1"
 description = "Search engine toolkit and Wikipedia/Wikidata/Commons/Wiktionary wrappers."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [
-    { name = "FrancoFantomius" },
-]
+authors = [{ name = "FrancoFantomius" }]
 keywords = [
     "search",
     "search-engine",
@@ -38,20 +36,11 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = [
-    "requests>=2.28",
-    "beautifulsoup4>=4.11",
-]
+dependencies = ["requests>=2.28", "beautifulsoup4>=4.11"]
 
 [project.optional-dependencies]
-test = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-]
+test = ["pytest>=7.0", "pytest-cov>=4.0"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0"]
 
 [project.urls]
 Homepage = "https://github.com/FrancoFantomius/netgo"

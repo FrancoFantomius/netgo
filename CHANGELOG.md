@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-08-15
+
+### Fixed
+- Fixed URL substring sanitization and hostname validation in Google and Bing search parsers (`netgo.search.google`, `netgo.search.bing`) to prevent partial host match vulnerabilities.
+- Added explicit workflow permissions in GitHub Actions CI pipelines.
+
+### Added
+- Repository cleanup utility script (`scripts/clean_ignored.py`) with npm `clean` script integration and unit tests (`tests/test_clean_ignored.py`).
+- Automated multi-platform and Python version matrix testing with code coverage reporting in CI.
+- Comprehensive usage examples and documentation pages for search, Wikipedia, Wikidata, Wikimedia Commons, Wiktionary, page parsing, and sitemaps.
+
 ## [0.4.0] - 2026-08-13
 
 ### Added
