@@ -75,3 +75,25 @@ def test_parse_results_handles_absolute_redirects():
     soup = BeautifulSoup(html, "html.parser")
     results = _parse_results(soup)
     assert [r.url for r in results] == ["https://www.example.org", "https://en.wikipedia.org"]
+
+
+def test_url_sanitization_avoids_partial_substring_matches():
+    # Non-google domains containing 'google.com' should not be decoded as Google redirects
+    untrusted = "https://evil-google.com/url?q=https%3A%2F%2Fexample.org"
+    assert _decode_google_url(untrusted) == untrusted
+
+    untrusted_sub = "https://google.com.evil.com/url?q=https%3A%2F%2Fexample.org"
+    assert _decode_google_url(untrusted_sub) == untrusted_sub
+
+    # Search results pointing to third-party domains with 'google.com' substring should be kept
+    html = """
+    <div class="g"><div class="tF2Cxc">
+      <a href="/url?q=https%3A%2F%2Fnot-google.com%2Farticle">
+        <h3>Third Party</h3>
+      </a>
+    </div></div>
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    results = _parse_results(soup)
+    assert len(results) == 1
+    assert results[0].url == "https://not-google.com/article"

@@ -29,6 +29,15 @@ _U_PARAM_RE = re.compile(r"[?&]u=(?:a1)?([A-Za-z0-9_=-]+)")
 
 _BING_HOSTS = ("bing.com", "bingj.com")
 
+
+def _is_bing_host(hostname: str | None) -> bool:
+    """Return True if the given hostname matches bing.com, bingj.com, or subdomains."""
+    if not hostname:
+        return False
+    host = hostname.lower()
+    return any(host == bh or host.endswith("." + bh) for bh in _BING_HOSTS)
+
+
 _BLOCK_MARKERS = (
     "robot check",
     "verify you are human",
@@ -65,7 +74,11 @@ def _decode_bing_url(text: str) -> str | None:
     host ``bingj.com``) and anything else that cannot be resolved return
     ``None`` and are skipped by the caller.
     """
-    if "bing.com/ck/a" in text:
+    parsed = urlparse(text)
+    host = parsed.hostname
+    is_bing = _is_bing_host(host)
+
+    if is_bing and parsed.path.rstrip("/").endswith("/ck/a"):
         match = _U_PARAM_RE.search(text)
         if match:
             payload = match.group(1)
@@ -76,9 +89,7 @@ def _decode_bing_url(text: str) -> str | None:
             except Exception:  # noqa: BLE001
                 return None
         return None
-    if text.startswith("http") and not any(
-        host in urlparse(text).netloc for host in _BING_HOSTS
-    ):
+    if text.startswith("http") and not is_bing:
         return text
     return None
 

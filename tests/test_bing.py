@@ -42,6 +42,16 @@ def test_decode_bing_url_direct_link():
     assert _decode_bing_url("/relative") is None
 
 
+def test_decode_bing_url_avoids_partial_substring_matches():
+    # External sites containing 'bing.com' in query or path should be returned as direct links
+    url_with_query = "https://evil.com/page?ref=bing.com/ck/a"
+    assert _decode_bing_url(url_with_query) == url_with_query
+
+    # Sites with bing.com or bingj.com as a substring in hostname should be treated as external
+    subdomain_attack = "https://evil-bing.com/article"
+    assert _decode_bing_url(subdomain_attack) == subdomain_attack
+
+
 def test_parse_results_extracts_bing_cards():
     soup = BeautifulSoup(SERP_HTML, "html.parser")
     results = _parse_results(soup)

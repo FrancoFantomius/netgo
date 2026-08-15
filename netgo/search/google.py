@@ -58,14 +58,16 @@ def _build_url(params: SearchParams) -> str:
     return url
 
 
+def _is_google_host(hostname: str | None) -> bool:
+    """Return True if the given hostname is google.com or a subdomain of it."""
+    if not hostname:
+        return False
+    host = hostname.lower()
+    return host == "google.com" or host.endswith(".google.com")
+
+
 def _decode_google_url(text: str) -> str:
-    """Resolve a Google redirect link to the real destination URL.
-
-    Result anchors come in three shapes, all of which are handled:
-
-    - relative: ``/url?q=<encoded-URL>&sa=...``
-    - absolute: ``https://www.google.com/url?esrc=s&q=<encoded-URL>&usg=...``
-    - translated: ``https://translate.google.com/translate?u=<encoded-URL>``
+    """Extract the destination URL from a Google redirect link.
 
     The target is decoded from the ``q`` (or ``u``) parameter. Inputs
     that are not redirect links are returned unchanged.
@@ -83,14 +85,16 @@ def _decode_google_url(text: str) -> str:
         'https://example.org/page'
     """
     parsed = urlparse(text)
+    host = (parsed.hostname or "").lower()
+    is_google = _is_google_host(host)
     is_redirect = (
         text.startswith("/url")
         or (
-            "google.com" in parsed.netloc
+            is_google
             and parsed.path.rstrip("/").endswith("/url")
         )
         or (
-            parsed.netloc == "translate.google.com"
+            host == "translate.google.com"
             and parsed.path.rstrip("/").endswith("/translate")
         )
     )
@@ -99,7 +103,7 @@ def _decode_google_url(text: str) -> str:
 
     query = parsed.query
     qs = parse_qs(query)
-    target_param = "u" if parsed.netloc == "translate.google.com" else "q"
+    target_param = "u" if host == "translate.google.com" else "q"
     target = qs.get(target_param)
     if target:
         return target[0]
@@ -133,7 +137,8 @@ def _parse_results(soup: BeautifulSoup) -> list[Result]:
     )
     for a in soup.select(selector):
         url = _decode_google_url(a.get("href", ""))
-        if not url.startswith("http") or "google.com" in urlparse(url).netloc:
+        parsed_url = urlparse(url)
+        if not url.startswith("http") or _is_google_host(parsed_url.hostname):
             continue
         position += 1
 
