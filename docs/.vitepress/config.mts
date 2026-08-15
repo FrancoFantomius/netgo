@@ -15,6 +15,7 @@ export default defineConfig({
       { text: 'Page Reading', link: '/netgo.page' },
       { text: 'Sitemaps', link: '/netgo.sitemap' },
       { text: 'Wikimedia', link: '/netgo.wiki' },
+      { text: 'Examples', link: '/examples' },
       {
         text: 'v0.4.0',
         items: [
@@ -31,6 +32,13 @@ export default defineConfig({
         items: [
           { text: 'Overview', link: '/' },
           { text: 'netgo', link: '/netgo' }
+        ]
+      },
+      {
+        text: 'Examples & Guides',
+        collapsed: false,
+        items: [
+          { text: 'Code Examples', link: '/examples' }
         ]
       },
       {

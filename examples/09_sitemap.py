@@ -6,43 +6,65 @@ a whole sitemap index tree down to every page URL (``crawl``) and filters
 the crawled URLs by a prefix (``filter_by_prefix``).
 """
 
+# Import sitemap tools and error classes
 from netgo import SitemapError, sitemap
 
 SITE = "https://www.example.com"
 
 
 def main():
+    # -------------------------------------------------------------
+    # 1. Discover sitemaps declared in robots.txt
+    # -------------------------------------------------------------
+    # `sitemap.discover(site_url)`: parses robots.txt to find sitemap URLs
+    print(f"Discovering sitemaps declared in robots.txt for: {SITE}")
     found = sitemap.discover(SITE)
-    print(f"{len(found)} sitemap(s) declared in robots.txt of {SITE}")
+    print(f"Found {len(found)} sitemap(s):")
     for url in found:
-        print("  -", url)
+        print(f"  - {url}")
 
     if not found:
-        print("no sitemaps advertised; nothing else to do")
+        print("No sitemaps advertised in robots.txt; ending demo.")
         return
 
-    root = found[0]
+    root_sitemap = found[0]
+
+    # -------------------------------------------------------------
+    # 2. Load and parse a specific sitemap
+    # -------------------------------------------------------------
+    # `sitemap.load(url)`: fetches and parses sitemaps, automatically
+    # uncompressing .gz sitemaps and determining kind ("urlset" | "sitemapindex" | "text")
     try:
-        sm = sitemap.load(root)
+        sm = sitemap.load(root_sitemap)
     except SitemapError as exc:
-        print(f"could not load {root}: {exc}")
+        print(f"Could not load sitemap at {root_sitemap}: {exc}")
         return
 
-    print(f"\n{sm.url} -> kind={sm.kind}, {len(sm)} entries")
+    print(f"\nLoaded Sitemap: {sm.url}")
+    print(f"  Type: {sm.kind} | Total entries: {len(sm)}")
 
+    # If the sitemap is an index pointing to child sitemaps:
     if sm.kind == "sitemapindex":
-        print("child sitemaps:")
+        print("\nChild Sitemaps:")
         for child in sm.children:
-            print("  -", child)
+            print(f"  - {child}")
 
-    print("\nfirst 5 page URLs:")
-    for entry in sitemap.crawl(root)[:5]:
-        print("  -", entry.loc, entry.lastmod)
+    # -------------------------------------------------------------
+    # 3. Crawl entire sitemap tree down to page URLs
+    # -------------------------------------------------------------
+    # `sitemap.crawl(url)`: recursively traverses sitemap indexes
+    print("\nCrawling page URLs (first 5 shown):")
+    for entry in sitemap.crawl(root_sitemap)[:5]:
+        print(f"  - Loc: {entry.loc} (Last modified: {entry.lastmod})")
 
-    print("\nfilter all pages under a URL prefix:")
+    # -------------------------------------------------------------
+    # 4. Filter crawled URLs by prefix
+    # -------------------------------------------------------------
+    # `sitemap.filter_by_prefix(url, prefix)`: returns only URLs starting with prefix
     prefix = f"{SITE}/"
-    for entry in sitemap.filter_by_prefix(root, prefix)[:5]:
-        print("  -", entry.loc)
+    print(f"\nFiltering URLs with prefix '{prefix}' (first 5 shown):")
+    for entry in sitemap.filter_by_prefix(root_sitemap, prefix)[:5]:
+        print(f"  - {entry.loc}")
 
 
 if __name__ == "__main__":

@@ -1,16 +1,18 @@
-"""Generate markdown API documentation from netgo's docstrings.
+"""Generate markdown API documentation and examples from netgo's codebase.
 
 Run from the repository root:
 
     python scripts/generate_docs.py
 
 This walks the ``netgo`` package with :func:`inspect`, extracts module,
-class and function docstrings, and writes one markdown file per module
-into ``docs/``, plus a ``docs/README.md`` index.
+class and function docstrings, and writes markdown documentation files
+into ``docs/``, generates a comprehensive ``docs/examples.md`` page,
+and produces an introductory ``docs/index.md``.
 """
 
 from __future__ import annotations
 
+import ast
 import importlib
 import inspect
 import pkgutil
@@ -22,6 +24,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "docs"
+EXAMPLES_DIR = ROOT / "examples"
+GITHUB_REPO_URL = "https://github.com/FrancoFantomius/netgo"
+GITHUB_EXAMPLES_URL = f"{GITHUB_REPO_URL}/tree/master/examples"
 
 # Prefer the source tree over any installed copy of netgo, so the docs are
 # always generated from this checkout, no matter where the script is run from.
@@ -250,7 +255,8 @@ def _render_function(fn: Any, name: str) -> list[str]:
     return out
 
 
-def render_module(module: Any) -> str:
+def render_module(module: Any) -> tuple[str, int, int]:
+    """Render a module to markdown and return (markdown_text, class_count, function_count)."""
     doc = inspect.cleandoc(module.__doc__ or "")
     lines = []
     if doc:
@@ -262,33 +268,220 @@ def render_module(module: Any) -> str:
         if rest:
             lines.append("")
             lines.append(_render_docstring(rest))
-    for name, obj in _members(module):
+
+    members = _members(module)
+    class_count = 0
+    func_count = 0
+
+    for name, obj in members:
         if lines and lines[-1] != "":
             lines.append("")
         if inspect.isclass(obj):
+            class_count += 1
             lines.extend(_render_class(obj, name))
         else:
+            func_count += 1
             lines.extend(_render_function(obj, name))
+
+    return "\n".join(lines), class_count, func_count
+
+
+def parse_examples() -> list[dict[str, Any]]:
+    """Parse all example files from the examples directory."""
+    examples: list[dict[str, Any]] = []
+    if not EXAMPLES_DIR.exists():
+        return examples
+
+    for py_file in sorted(EXAMPLES_DIR.glob("*.py")):
+        source_code = py_file.read_text(encoding="utf-8")
+        docstring = ""
+        try:
+            tree = ast.parse(source_code)
+            docstring = ast.get_docstring(tree) or ""
+        except Exception:
+            docstring = ""
+
+        # Extract title and description from docstring
+        doc_lines = [ln.strip() for ln in docstring.strip().splitlines() if ln.strip()]
+        title = doc_lines[0] if doc_lines else py_file.stem.replace("_", " ").title()
+        description = "\n".join(doc_lines[1:]) if len(doc_lines) > 1 else ""
+
+        github_file_url = f"{GITHUB_REPO_URL}/blob/master/examples/{py_file.name}"
+
+        examples.append({
+            "filename": py_file.name,
+            "stem": py_file.stem,
+            "title": title,
+            "description": description,
+            "docstring": docstring,
+            "code": source_code,
+            "github_url": github_file_url,
+        })
+    return examples
+
+
+def render_examples_page(examples: list[dict[str, Any]]) -> str:
+    """Render the full examples markdown page."""
+    lines = [
+        "# Code Examples",
+        "",
+        "Runnable, end-to-end examples demonstrating how to use `netgo` for web search, "
+        "parallel query execution, page content extraction, sitemap parsing, and Wikimedia integrations.",
+        "",
+        f"All source files are available in the **[GitHub Examples Directory]({GITHUB_EXAMPLES_URL})**.",
+        "",
+        "## Index of Examples",
+        "",
+        "| Example | Description | Source Link |",
+        "| :--- | :--- | :--- |",
+    ]
+
+    for ex in examples:
+        summary = ex["title"]
+        anchor = ex["filename"].replace(".", "").replace("_", "-")
+        lines.append(f"| [{ex['filename']}](#{anchor}) | {summary} | [View on GitHub]({ex['github_url']}) |")
+
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    for ex in examples:
+        anchor = ex["filename"].replace(".", "").replace("_", "-")
+        lines.append(f"## `{ex['filename']}`")
+        lines.append("")
+        lines.append(f"**Description:** {ex['title']}")
+        if ex["description"]:
+            lines.append("")
+            lines.append(_clean_reST(ex["description"]))
+        lines.append("")
+        lines.append(f"**GitHub Source:** [{ex['filename']}]({ex['github_url']})")
+        lines.append("")
+        lines.append("```python")
+        lines.append(ex["code"].strip())
+        lines.append("```")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def render_index_page(
+    module_stats: list[dict[str, Any]],
+    examples: list[dict[str, Any]]
+) -> str:
+    """Render the home index.md page with VitePress home layout frontmatter."""
+    lines = [
+        "---",
+        "layout: home",
+        "",
+        "hero:",
+        '  name: "netgo"',
+        '  text: "Python Search Toolkit & Wikimedia APIs"',
+        "  tagline: Lightweight Python library for scraping search engines, extracting clean page content, parsing sitemaps, and querying Wikimedia APIs.",
+        "  actions:",
+        "    - theme: brand",
+        "      text: Explore API Reference",
+        "      link: /netgo",
+        "    - theme: alt",
+        "      text: Code Examples",
+        "      link: /examples",
+        "    - theme: alt",
+        "      text: GitHub Repository",
+        f"      link: {GITHUB_REPO_URL}",
+        "",
+        "features:",
+        "  - title: Unified Search Engines",
+        "    details: Engine-agnostic API querying Google and Bing, returning consistent Result objects with pagination and safe search.",
+        "    link: /netgo.search",
+        "  - title: Clean Page Extraction",
+        "    details: Download any web page and extract the core article text, filtering out navigation, ads, headers, and footers.",
+        "    link: /netgo.page",
+        "  - title: XML & Text Sitemaps",
+        "    details: Discover sitemaps via robots.txt, parse XML sitemap indexes, and crawl or filter URLs efficiently.",
+        "    link: /netgo.sitemap",
+        "  - title: Wikipedia & Commons",
+        "    details: Full-text search, section outlines, summaries, backlinks, categories, and Commons media file inspection.",
+        "    link: /netgo.wiki",
+        "  - title: Wikidata & SPARQL",
+        "    details: Resolve titles to QIDs, inspect claims, labels, descriptions, aliases, and run live SPARQL queries.",
+        "    link: /netgo.wiki.wikidata",
+        "  - title: Wiktionary",
+        "    details: Look up parts of speech, numbered definitions, etymologies, and cross-language terms across editions.",
+        "    link: /netgo.wiki.wiktionary",
+        "---",
+        "",
+        "## Architecture Overview",
+        "",
+        "- **`netgo`**: Top-level package exports and convenient high-level functions (`search`, `search_many`, `fetch`).",
+        "- **`netgo.search`**: Google and Bing backends, consistent `Result` models, pagination, error handling.",
+        "- **`netgo.page`**: Article body extraction engine, HTML boilerplate filtering, and `Page` data model.",
+        "- **`netgo.sitemap`**: Robots.txt discovery, XML/text sitemap parsing, index crawling, and prefix filtering.",
+        "- **`netgo.wiki`**: MediaWiki Action API client, Wikipedia, Wikidata, Commons, and Wiktionary interfaces.",
+        "",
+        "## Submodule API Reference",
+        "",
+        "| Module | Documentation Link | Documented Classes | Documented Functions |",
+        "| :--- | :--- | :--- | :--- |",
+    ]
+
+    for stat in module_stats:
+        mod_name = stat["name"]
+        doc_link = f"[{mod_name}]({mod_name}.md)"
+        lines.append(f"| `{mod_name}` | {doc_link} | {stat['classes']} | {stat['functions']} |")
+
+    lines.append("")
+    lines.append("## Runnable Examples")
+    lines.append("")
+    lines.append(
+        f"End-to-end runnable scripts are located in the "
+        f"[GitHub Examples Directory]({GITHUB_EXAMPLES_URL}) "
+        f"and documented on the [Code Examples Page](/examples)."
+    )
+    lines.append("")
+    lines.append("| Example File | Purpose / Feature | GitHub Source |")
+    lines.append("| :--- | :--- | :--- |")
+
+    for ex in examples:
+        lines.append(f"| [`{ex['filename']}`](/examples#{ex['filename'].replace('.', '').replace('_', '-')}) | {ex['title']} | [View Source]({ex['github_url']}) |")
+
+    lines.append("")
     return "\n".join(lines)
 
 
 def main() -> None:
-    """Extract all documentation and write the markdown files."""
+    """Extract all documentation, examples, and write the markdown files."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    index = ["# netgo API documentation", "",
-             "Generated from docstrings with `scripts/generate_docs.py`.", "", ""]
-    written = 0
+    written_modules = 0
+    module_stats: list[dict[str, Any]] = []
 
+    # 1. Render all module API markdown files
     for module_name, module in sorted(iter_modules(netgo), key=lambda m: m[0]):
-        text = render_module(module)
+        text, n_classes, n_funcs = render_module(module)
         out_file = OUTPUT_DIR / f"{module_name}.md"
         out_file.write_text(text, encoding="utf-8")
-        index.append(f"- [{module_name}]({out_file.name})")
-        written += 1
+        written_modules += 1
+        module_stats.append({
+            "name": module_name,
+            "classes": n_classes,
+            "functions": n_funcs,
+        })
 
-    (OUTPUT_DIR / "index.md").write_text("\n".join(index), encoding="utf-8")
-    (OUTPUT_DIR / "README.md").write_text("\n".join(index), encoding="utf-8")
-    print(f"Wrote {written} module files to {OUTPUT_DIR}")
+    # 2. Parse and render examples documentation
+    examples = parse_examples()
+    examples_text = render_examples_page(examples)
+    (OUTPUT_DIR / "examples.md").write_text(examples_text, encoding="utf-8")
+
+    # 3. Render home introduction index.md
+    index_text = render_index_page(module_stats, examples)
+    (OUTPUT_DIR / "index.md").write_text(index_text, encoding="utf-8")
+
+    # Ensure docs/README.md is removed if it exists
+    readme_path = OUTPUT_DIR / "README.md"
+    if readme_path.exists():
+        readme_path.unlink()
+
+    print(f"Wrote {written_modules} module files, examples.md, and index.md to {OUTPUT_DIR}")
 
 
 if __name__ == "__main__":
