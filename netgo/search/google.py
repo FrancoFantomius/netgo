@@ -83,10 +83,11 @@ def _decode_google_url(text: str) -> str:
         'https://example.org/page'
     """
     parsed = urlparse(text)
+    host = (parsed.hostname or "").lower()
     is_redirect = (
         text.startswith("/url")
         or (
-            "google.com" in parsed.netloc
+            (host == "google.com" or host.endswith(".google.com"))
             and parsed.path.rstrip("/").endswith("/url")
         )
         or (
