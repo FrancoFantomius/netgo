@@ -56,9 +56,9 @@ features:
 | `netgo.page.fetch` | [netgo.page.fetch](netgo.page.fetch.md) | 0 | 1 |
 | `netgo.page.models` | [netgo.page.models](netgo.page.models.md) | 1 | 0 |
 | `netgo.search` | [netgo.search](netgo.search.md) | 0 | 2 |
-| `netgo.search.bing` | [netgo.search.bing](netgo.search.bing.md) | 0 | 5 |
+| `netgo.search.bing` | [netgo.search.bing](netgo.search.bing.md) | 0 | 6 |
 | `netgo.search.errors` | [netgo.search.errors](netgo.search.errors.md) | 2 | 0 |
-| `netgo.search.google` | [netgo.search.google](netgo.search.google.md) | 0 | 5 |
+| `netgo.search.google` | [netgo.search.google](netgo.search.google.md) | 0 | 6 |
 | `netgo.search.models` | [netgo.search.models](netgo.search.models.md) | 2 | 0 |
 | `netgo.sitemap` | [netgo.sitemap](netgo.sitemap.md) | 0 | 0 |
 | `netgo.sitemap.errors` | [netgo.sitemap.errors](netgo.sitemap.errors.md) | 3 | 0 |

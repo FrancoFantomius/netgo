@@ -10,16 +10,11 @@ The query is URL-encoded, then ``num``, ``hl`` and ``start`` are appended. ``saf
 'https://www.google.com/search?q=hello%20world&num=10&hl=en&start=0&safe=active&gbv=1'
 ```
 
+### `_is_google_host(hostname: str | None) -> bool`
+Return True if the given hostname is google.com or a subdomain of it.
+
 ### `_decode_google_url(text: str) -> str`
-Resolve a Google redirect link to the real destination URL.
-
-Result anchors come in three shapes, all of which are handled:
-
-- relative: ``/url?q=<encoded-URL>&sa=...``
-
-- absolute: ``https://www.google.com/url?esrc=s&q=<encoded-URL>&usg=...``
-
-- translated: ``https://translate.google.com/translate?u=<encoded-URL>``
+Extract the destination URL from a Google redirect link.
 
 The target is decoded from the ``q`` (or ``u``) parameter. Inputs that are not redirect links are returned unchanged.
 

@@ -1,3 +1,6 @@
+### `_is_bing_host(hostname: str | None) -> bool`
+Return True if the given hostname matches bing.com, bingj.com, or subdomains.
+
 ### `_build_url(params: netgo.search.models.SearchParams) -> str`
 Build a Bing search URL from the given `SearchParams`.
 
